@@ -1,0 +1,14 @@
+[Unit]
+Description=Chipolo scanner for Home Assistant
+After=bluetooth.target network-online.target
+Wants=bluetooth.target network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/chipolo
+ExecStart=/home/pi/chipolo/venv/bin/python chipolo_scanner.py --plain
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

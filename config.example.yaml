@@ -1,0 +1,17 @@
+# Copy to config.yaml and fill in your MQTT details:
+#   cp config.example.yaml config.yaml
+
+mqtt:
+  host: 192.168.1.10          # IP address of Home Assistant (where Mosquitto runs)
+  port: 1883
+  username: chipolo           # the Home Assistant user you made for the scanner
+  password: change-me
+  discovery_prefix: homeassistant
+  base_topic: chipolo_scanner
+
+scanner:
+  # name: raspienterance      # shown in Home Assistant; defaults to the hostname
+  near: -85                   # RSSI (dBm) needed to count as "home"; -70 = a few meters
+  timeout: 60                 # seconds without a signal before a Chipolo is "not_home"
+  update_interval: 30         # min. seconds between RSSI updates while nothing changes
+  rssi_delta: 3               # only send an RSSI update if it changed by this many dBm
