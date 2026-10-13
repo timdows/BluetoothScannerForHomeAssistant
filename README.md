@@ -18,6 +18,8 @@ change their MAC address and can't be tracked individually.
 
 Per Chipolo (device "Chipolo D9:00:00:02:3B:47"):
 
+![A Chipolo device in Home Assistant](images/ha-chipolo-device.png)
+
 | Entity | Example |
 | --- | --- |
 | Device tracker | `home` / `not_home` |
@@ -27,6 +29,8 @@ Per Chipolo (device "Chipolo D9:00:00:02:3B:47"):
 | **Block** button (configuration) | hides this Chipolo for good |
 
 Scanner device ("Chipolo scanner raspienterance"):
+
+![The scanner device in Home Assistant](images/ha-scanner-device.png)
 
 | Entity | Purpose |
 | --- | --- |
@@ -56,20 +60,13 @@ If the Pi goes offline, all its entities become *unavailable* instead of `not_ho
 
 ## 2. Install on the Pi
 
-From Windows (PowerShell), copy the files:
-
-```bash
-ssh pi@raspienterance "mkdir -p ~/chipolo"
-```
-```bash
-scp chipolo_scanner.py ha_mqtt.py requirements.txt config.example.yaml chipolo-scanner.service pi@raspienterance:~/chipolo/
-```
-
 On the Pi:
 
 ```bash
-cd ~/chipolo
-sudo apt install -y python3-venv
+sudo apt install -y git python3-venv
+cd ~
+git clone https://github.com/timdows/BluetoothScannerForHomeAssistant.git
+cd BluetoothScannerForHomeAssistant
 python3 -m venv venv
 ./venv/bin/pip install -r requirements.txt
 cp config.example.yaml config.yaml
@@ -82,7 +79,11 @@ Test it (live table, shows `MQTT: connected` at the top):
 ./venv/bin/python chipolo_scanner.py
 ```
 
-Your Chipolos should now appear in Home Assistant under *Settings → Devices & services → MQTT*.
+![Scanner running in the console](images/console-scanner.png)
+
+Your Chipolos should now appear in Home Assistant under *Settings → Devices & services → MQTT*:
+
+![Chipolos in the MQTT integration](images/ha-mqtt-devices.png)
 
 ### Run at boot
 
@@ -91,6 +92,20 @@ sudo cp chipolo-scanner.service /etc/systemd/system/
 sudo systemctl enable --now chipolo-scanner
 journalctl -u chipolo-scanner -f      # view the log
 ```
+
+The service file assumes user `pi` and the folder `/home/pi/BluetoothScannerForHomeAssistant`.
+Edit it first if yours differ.
+
+### Update to the latest version
+
+```bash
+cd ~/BluetoothScannerForHomeAssistant
+git pull
+./venv/bin/pip install -r requirements.txt
+sudo systemctl restart chipolo-scanner
+```
+
+Your `config.yaml` and `blocked.json` are not in git, so `git pull` leaves them alone.
 
 ## 3. Name, hide or block Chipolos
 

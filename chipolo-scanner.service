@@ -5,8 +5,8 @@ Wants=bluetooth.target network-online.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/chipolo
-ExecStart=/home/pi/chipolo/venv/bin/python chipolo_scanner.py --plain
+WorkingDirectory=/home/pi/BluetoothScannerForHomeAssistant
+ExecStart=/home/pi/BluetoothScannerForHomeAssistant/venv/bin/python chipolo_scanner.py --plain
 Restart=always
 RestartSec=10
 
