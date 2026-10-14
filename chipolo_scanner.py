@@ -39,12 +39,18 @@ APPLE_COMPANY_ID = 0x004C
 FINDMY_TYPE = 0x12  # Apple "Find My" offline-finding advertisement
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULTS = {"near": -85, "timeout": 60, "update_interval": 30, "rssi_delta": 3}
+DEFAULTS = {"near": -85, "timeout": 60, "update_interval": 30, "rssi_delta": 3,
+            "heartbeat": 60}
 KEEPALIVE = 300  # always resend a visible tag's state at least this often (seconds)
 
 
 def now_str():
     return dt.datetime.now().strftime("%H:%M:%S")
+
+
+def wall_now():
+    """Current local time as ISO 8601 with timezone (what HA timestamp sensors expect)."""
+    return dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def estimate_distance(rssi, tx_power=-59, n=2.5):
@@ -75,7 +81,7 @@ class Tag:
         self.rssi_history.append(rssi)
         self.rssi_history = self.rssi_history[-5:]
         self.last_seen = time.monotonic()
-        self.last_seen_wall = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+        self.last_seen_wall = wall_now()
 
     def ha_state(self):
         return {
@@ -101,6 +107,8 @@ class Scanner:
         self.blocked_file = blocked_file
         self.blocked = self.load_blocked()
         self.last_scanner_state = None
+        self.last_heartbeat = 0.0
+        self.started = wall_now()
 
     # ------------------------------------------------------------ block list
 
@@ -245,10 +253,11 @@ class Scanner:
 
         if self.bridge:
             state = (sum(g.present for g in self.tags.values()), frozenset(self.blocked))
-            if state != self.last_scanner_state:
-                self.bridge.publish_scanner_state(state[0], state[1])
-                if self.bridge.connected:
-                    self.last_scanner_state = state
+            if (state != self.last_scanner_state
+                    or t - self.last_heartbeat >= self.args.heartbeat):
+                if self.bridge.publish_scanner_state(state[0], state[1], self.started,
+                                                     wall_now()):
+                    self.last_scanner_state, self.last_heartbeat = state, t
 
         # Forget devices that have been gone a long time
         for addr in [a for a, g in self.tags.items()
@@ -324,6 +333,9 @@ class Scanner:
         finally:
             await scanner.stop()
             if self.bridge:
+                if self.last_scanner_state:  # final "last active" before going offline
+                    self.bridge.publish_scanner_state(*self.last_scanner_state, self.started,
+                                                      wall_now())
                 self.bridge.stop()
 
 

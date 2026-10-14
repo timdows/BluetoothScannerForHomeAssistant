@@ -35,11 +35,15 @@ Scanner device ("Chipolo scanner raspienterance"):
 | Entity | Purpose |
 | --- | --- |
 | Chipolos nearby | how many tags are `home` right now |
+| Last active | last time the service was running (updated every 60 s, kept when offline) |
+| Service | running / not running; its history shows when the service was up |
+| Started (diagnostic) | when the service last started |
 | Blocked Chipolos | count; the MAC list is in the attributes |
 | Unblock MAC | type a MAC (`AA:BB:CC:DD:EE:FF`) to unblock it |
 | Unblock all | button |
 
-If the Pi goes offline, all its entities become *unavailable* instead of `not_home`.
+If the Pi goes offline, all its entities become *unavailable* instead of `not_home` —
+except *Last active* and *Service*, so you can always see when the scanner was last running.
 
 ### Updates sent
 
@@ -160,7 +164,7 @@ Command line options override `config.yaml`.
 | `chipolo_scanner/status` | `online` / `offline` |
 | `chipolo_scanner/<mac>/state` | `{"state":"home","mac":"D9:…","rssi":-64,"distance":1.6,"last_seen":"…"}` |
 | `chipolo_scanner/<mac>/block` | Block button |
-| `chipolo_scanner/scanner/state` | `{"nearby":2,"blocked":["…"]}` |
+| `chipolo_scanner/scanner/state` | `{"nearby":2,"blocked":["…"],"started":"…","last_active":"…"}` |
 | `homeassistant/…/chipolo_scanner/…/config` | discovery configs |
 
 `<mac>` is the MAC in lowercase without colons, e.g. `d90000023b47`.

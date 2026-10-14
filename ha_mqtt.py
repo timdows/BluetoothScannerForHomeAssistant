@@ -168,6 +168,23 @@ class HomeAssistantBridge:
             "json_attributes_template": "{{ {'blocked': value_json.blocked} | tojson }}",
             "entity_category": "diagnostic", "icon": "mdi:cancel",
         })
+        # These two have no availability_topic on purpose: they must keep showing
+        # their last value while the scanner is offline.
+        self._publish(self._config_topic("sensor", "scanner_last_active"), {
+            "device": dev, "name": "Last active", "unique_id": f"{uid}_last_active",
+            "state_topic": st, "value_template": "{{ value_json.last_active }}",
+            "device_class": "timestamp", "icon": "mdi:heart-pulse",
+        })
+        self._publish(self._config_topic("binary_sensor", "scanner_service"), {
+            "device": dev, "name": "Service", "unique_id": f"{uid}_service",
+            "state_topic": self.avail_topic, "payload_on": "online", "payload_off": "offline",
+            "device_class": "running",
+        })
+        self._publish(self._config_topic("sensor", "scanner_started"), {
+            **common, "name": "Started", "unique_id": f"{uid}_started",
+            "state_topic": st, "value_template": "{{ value_json.started }}",
+            "device_class": "timestamp", "entity_category": "diagnostic",
+        })
         self._publish(self._config_topic("text", "scanner_unblock"), {
             **common, "name": "Unblock MAC", "unique_id": f"{uid}_unblock",
             "command_topic": f"{self.base}/scanner/unblock",
@@ -245,10 +262,14 @@ class HomeAssistantBridge:
             self._publish(self._config_topic(components.get(key, "sensor"), f"{tid}_{key}"), "")
         self._publish(f"{self.base}/{tid}/state", "")
 
-    def publish_scanner_state(self, nearby, blocked):
-        if self.connected:
-            self._publish(f"{self.base}/scanner/state",
-                          {"nearby": nearby, "blocked": sorted(blocked)})
+    def publish_scanner_state(self, nearby, blocked, started, last_active):
+        if not self.connected:
+            return False
+        self._publish(f"{self.base}/scanner/state", {
+            "nearby": nearby, "blocked": sorted(blocked),
+            "started": started, "last_active": last_active,
+        })
+        return True
 
     def reset_discovered(self):
         self.discovered.clear()

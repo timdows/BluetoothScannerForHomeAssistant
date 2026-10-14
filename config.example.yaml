@@ -15,3 +15,4 @@ scanner:
   timeout: 60                 # seconds without a signal before a Chipolo is "not_home"
   update_interval: 30         # min. seconds between RSSI updates while nothing changes
   rssi_delta: 3               # only send an RSSI update if it changed by this many dBm
+  heartbeat: 60               # seconds between "Last active" updates
